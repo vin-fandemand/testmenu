@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 
 void main() {
   runApp(MyApp());
@@ -93,12 +94,43 @@ class _MyHomePageState extends State<MyHomePage> {
           // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+            Listener(
+              onPointerDown: (PointerDownEvent event) async {
+                // Check if right mouse button clicked
+                if (event.kind == PointerDeviceKind.mouse &&
+                    event.buttons == kSecondaryMouseButton) {
+                  final overlay = Overlay.of(context)
+                      ?.context
+                      .findRenderObject() as RenderBox;
+                  final menuItem = await showMenu<int>(
+                      context: context,
+                      useRootNavigator: true,
+                      items: [
+                        PopupMenuItem(
+                            child: ListTile(
+                              dense: true,
+                              title: Text('Click me'),
+                              leading: Icon(Icons.delete),
+                            ),
+                            value: 1),
+                      ],
+                      position: RelativeRect.fromSize(
+                          event.position & Size(48.0, 48.0), overlay.size));
+                  // Check if menu item clicked
+                  switch (menuItem) {
+                    case 1:
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text("Menu Item selected"),
+                      ));
+                      break;
+
+                    default:
+                  }
+                }
+              },
+              child: Text(
+                'Right Click Here',
+              ),
             ),
           ],
         ),
