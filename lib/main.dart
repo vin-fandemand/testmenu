@@ -48,7 +48,11 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-
+  final List<Widget> _items = List<Widget>.generate(
+      50,
+      (int index) => MyCustomForm(
+            key: UniqueKey(),
+          ));
   void _incrementCounter() {
     setState(() {
       // This call to setState tells the Flutter framework that something has
@@ -74,72 +78,76 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Listener(
-              onPointerDown: (PointerDownEvent event) async {
-                // Check if right mouse button clicked
-                if (event.kind == PointerDeviceKind.mouse &&
-                    event.buttons == kSecondaryMouseButton) {
-                  final overlay = Overlay.of(context)
-                      ?.context
-                      .findRenderObject() as RenderBox;
-                  final menuItem = await showMenu<int>(
-                      context: context,
-                      useRootNavigator: true,
-                      items: [
-                        PopupMenuItem(
-                            child: ListTile(
-                              dense: true,
-                              title: Text('Click me'),
-                              leading: Icon(Icons.delete),
-                            ),
-                            value: 1),
-                      ],
-                      position: RelativeRect.fromSize(
-                          event.position & Size(48.0, 48.0), overlay.size));
-                  // Check if menu item clicked
-                  switch (menuItem) {
-                    case 1:
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text("Menu Item selected"),
-                      ));
-                      break;
+      body: ReorderableListView(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        children: _items,
+        onReorder: (int oldIndex, int newIndex) {
+          setState(() {
+            if (oldIndex < newIndex) {
+              newIndex -= 1;
+            }
+            final Widget item = _items.removeAt(oldIndex);
+            _items.insert(newIndex, item);
+          });
+        },
+      ),
+      // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
 
-                    default:
-                  }
+class MyCustomForm extends StatefulWidget {
+  MyCustomForm({Key? key}) : super(key: key);
+  @override
+  MyCustomFormState createState() {
+    return MyCustomFormState();
+  }
+}
+
+// Create a corresponding State class.
+// This class holds data related to the form.
+class MyCustomFormState extends State<MyCustomForm> {
+  // Create a global key that uniquely identifies the Form widget
+  // and allows validation of the form.
+  //
+  // Note: This is a GlobalKey<FormState>,
+  // not a GlobalKey<MyCustomFormState>.
+  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
+    // Build a Form widget using the _formKey created above.
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          TextFormField(
+            // The validator receives the text that the user has entered.
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter some text';
+              }
+              return null;
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: ElevatedButton(
+              onPressed: () {
+                // Validate returns true if the form is valid, or false otherwise.
+                if (_formKey.currentState!.validate()) {
+                  // If the form is valid, display a snackbar. In the real world,
+                  // you'd often call a server or save the information in a database.
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text('Processing Data')));
                 }
               },
-              child: Text(
-                'Right Click Here',
-              ),
+              child: Text('Submit'),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
